@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>顔認識</title>
+    <style>
+        /* video 要素の上に canvas 要素をオーバーレイするための CSS */
+        #container {
+            /* コンテナ用の div について */
+            position: relative;
+            /* 座標指定を相対値指定にする */
+        }
+
+        #video {
+            /* カメラ映像を流す video について */
+            transform: scaleX(-1);
+            /* 左右反転させる */
+        }
+
+        #canvas {
+            /* 描画用の canvas について */
+            transform: scaleX(-1);
+            /* 左右反転させる */
+            position: absolute;
+            /* 座標指定を絶対値指定にして */
+            left: 0;
+            /* X座標を0に */
+            top: 0;
+            /* Y座標を0に */
+        }
+
+        #canvas2 {
+            /* 描画用の canvas について */
+            /*transform: scaleX(-1);*/
+            /* 左右反転させる */
+            position: absolute;
+            /* 座標指定を絶対値指定にして */
+            left: 0;
+            /* X座標を0に */
+            top: 0;
+            /* Y座標を0に */
+        }
+
+        #canvas3 {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <!-- video の上に canvas をオーバーレイするための div 要素 -->
+        <video id="video" width="400" height="300" autoplay></video> <!-- カメラ映像を流す video -->
+        <canvas id="canvas" width="400" height="300"></canvas> <!-- 重ねて描画する canvas -->
+        <canvas id="canvas2" width="400" height="300"></canvas> <!-- 重ねて描画する canvas -->
+        <canvas id="canvas3" width="400" height="300"></canvas> <!-- 重ねて描画する canvas -->
+    </div>
+    <div id="dat"></div> <!-- データ表示用 div 要素 -->
+    <a
+        href="data:image/png;base64,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">ここ</a>
+    <!-- clmtrackr 関連ファイルの読み込み -->
+    <script src="./clmtrackr.js"></script> <!-- clmtrackr のメインライブラリの読み込み -->
+    <script src="./model_pca_20_svm.js"></script> <!-- 顔モデル（※）の読み込み -->
+    <script src="./emotion_classifier.js"></script> <!-- ★感情を分類する外部関数の読み込み -->
+    <script src="./emotionmodel.js"></script> <!-- ★感情モデル（※2）の読み込み -->
+
+    <script>
+        // もろもろの準備
+        var flag = 1;
+        var video = document.getElementById("video");           // video 要素を取得
+        var canvas = document.getElementById("canvas");         // canvas 要素の取得
+        var context = canvas.getContext("2d");                  // canvas の context の取得
+        var canvas2 = document.getElementById("canvas2");         // canvas 要素の取得
+        var context2 = canvas2.getContext("2d");                  // canvas の context の取得
+        var canvas3 = document.getElementById("canvas3");         // canvas 要素の取得
+        var context3 = canvas2.getContext("2d");                  // canvas の context の取得
+        // getUserMedia によるカメラ映像の取得
+        var media = navigator.mediaDevices.getUserMedia({       // メディアデバイスを取得
+            video: { facingMode: "user" },                          // カメラの映像を使う（スマホならインカメラ）
+            audio: false                                          // マイクの音声は使わない
+        });
+        media.then((stream) => {                                // メディアデバイスが取得できたら
+            video.srcObject = stream;                             // video 要素にストリームを渡す
+        });
+
+        // clmtrackr の開始
+        var tracker = new clm.tracker();  // tracker オブジェクトを作成
+        tracker.init(pModel);             // tracker を所定のフェイスモデル（※）で初期化
+        tracker.start(video);             // video 要素内でフェイストラッキング開始
+
+        // 感情分類の開始
+        var classifier = new emotionClassifier();               // ★emotionClassifier オブジェクトを作成
+        classifier.init(emotionModel);                          // ★classifier を所定の感情モデル（※2）で初期化
+
+        // 描画ループ
+        function drawLoop() {
+            requestAnimationFrame(drawLoop);                      // drawLoop 関数を繰り返し実行
+            var positions = tracker.getCurrentPosition();         // 顔部品の現在位置の取得
+
+            context.clearRect(0, 0, canvas.width, canvas.height); // canvas をクリア
+            context2.clearRect(0, 0, canvas.width, canvas.height); // canvas をクリア            
+            if (positions) {
+                var parameters = tracker.getCurrentParameters();      // ★現在の顔のパラメータを取得
+                var emotion = classifier.meanPredict(parameters);     // ★そのパラメータから感情を推定して emotion に結果を入れる
+                showData(positions, emotion);                                  // データの表示
+
+                //tracker.draw(canvas);                                 // canvas にトラッキング結果を描画
+                //drawStamp(positions, 62, 2.5, 0.0, 0.0);   // ★鼻のスタンプを描画
+                drawInfo(positions);
+
+                //スクショ保存する
+                if (flag == 1) {
+                    flag = 2;
+                    console.log('pushed capture');
+                    canvas.getContext('2d').drawImage(video, 0, 0, 400, 300); //videoタグの「今」の状態をcanvasに描写
+                    console.log(canvas.toDataURL());   //base64でデータ化
+                }
+            }
+        }
+        drawLoop();                                             // drawLoop 関数をトリガー
+        function drawInfo(pos) {
+            if (!pos) return 0;
+            context3.font = "20px 'ＭＳ ゴシック'";
+            context3.fillText('松下海央', 400 - pos[33][0] + 60, pos[33][1] - 100);
+            context3.fillText('23歳', 400 - pos[33][0] + 70, pos[33][1] - 60);
+            context3.fillText('エンジニア', 400 - pos[33][0] - 150, pos[33][1] - 80);
+            context3.fillText('練馬', 400 - pos[33][0] - 130, pos[33][1] + 70);
+            context3.fillText('バイク', 400 - pos[33][0] + 90, pos[33][1] + 50);
+
+            //console.log(pos);
+        }
+        // ★スタンプを描く drawStamp 関数
+        // (顔部品の位置データ, 基準位置, 大きさ, 横シフト, 縦シフト)
+        function drawStamp(pos, bNo, scale, hShift, vShift) {
+            //var eyes = pos[32][0] - pos[27][0];                   // 幅の基準として両眼の間隔を求める
+            //var nose = pos[62][1] - pos[33][1];                   // 高さの基準として眉間と鼻先の間隔を求める
+            //var wScale = eyes / img.width;                        // 両眼の間隔をもとに画像のスケールを決める
+            //var imgW = img.width * scale * wScale;                // 画像の幅をスケーリング
+            //var imgH = img.height * scale * wScale;               // 画像の高さをスケーリング
+            //var imgL = pos[bNo][0] - imgW / 2 + eyes * hShift;    // 画像のLeftを決める
+            //var imgT = pos[bNo][1] - imgH / 2 + nose * vShift;    // 画像のTopを決める
+
+
+
+            //context.fillRect(pos[32][0], pos[32][1], 50, 50);
+            console.log("type:" + typeof (pos) + ":" + pos);
+            if (!pos) return 0;
+            pos.forEach(element => {
+                drawCircle(element[0], element[1]);
+                context2.fillText('(' + Math.ceil(element[0]).toString() + ',' + Math.ceil(element[1]).toString() + ')', 400 - element[0], element[1]);
+            });
+            //console.log(pos);
+        }
+        // 顔部品（特徴点）の位置データを表示する showData 関数
+        function showData(pos, emo) {
+            var str = "";                                          // データの文字列を入れる変数
+            for (var i = 0; i < emo.length; i++) {                 // 全ての感情（6種類）について
+                str += emo[i].emotion + ": "                        // 感情名
+                    + emo[i].value.toFixed(1) + "<br>";            // 感情の程度（小数第一位まで）
+            }
+            var dat = document.getElementById("dat");             // データ表示用div要素の取得
+            dat.innerHTML = str;                                  // データ文字列の表示
+
+
+            //var str = "";                                         // データの文字列を入れる変数
+            for (var i = 0; i < pos.length; i++) {                 // 全ての特徴点（71個）について
+                str += "pos" + i + ": ("
+                    + Math.round(pos[i][0]) + ", "                 // X座標（四捨五入して整数に）
+                    + Math.round(pos[i][1]) + ")<br>";             // Y座標（四捨五入して整数に）
+            }
+            var dat = document.getElementById("dat");             // データ表示用div要素の取得
+            dat.innerHTML = str;                                  // データ文字列の表示
+        }
+
+        //円を描画
+        function drawCircle(x, y) {
+            // element = <canvas width="200" height="200"></canvas>
+            var context = canvas.getContext("2d");
+
+            // パスをリセット
+            context.beginPath();
+
+            // 円の中心座標: (100,100)
+            // 半径: 50
+            // 開始角度: 0度 (0 * Math.PI / 180)
+            // 終了角度: 360度 (360 * Math.PI / 180)
+            // 方向: true=反時計回りの円、false=時計回りの円
+            context.arc(x, y, 2, 0 * Math.PI / 180, 360 * Math.PI / 180, false);
+
+            // 塗りつぶしの色
+            context.fillStyle = "rgba(189,189,189,1)";
+
+            // 塗りつぶしを実行
+            context.fill();
+
+            // 線の色
+            //context.strokeStyle = "purple";
+
+            // 線の太さ
+            //context.lineWidth = 8;
+
+            // 線を描画を実行
+            context.stroke();
+        }
+
+        //画像の保存
+        function downloadCanvas() {
+            let canvas = document.getElementById('2d')
+            let link = document.getElementById('hiddenLink')
+            link.href = canvas.toDataURL()
+
+            document.getElementById('canvasImage').src = canvas.toDataURL()
+
+            link.click()
+        }
+        // ★感情データの表示
+        function showEmotionData(emo) {
+            var str = "";                                          // データの文字列を入れる変数
+            for (var i = 0; i < emo.length; i++) {                 // 全ての感情（6種類）について
+                str += emo[i].emotion + ": "                        // 感情名
+                    + emo[i].value.toFixed(1) + "<br>";            // 感情の程度（小数第一位まで）
+            }
+            var dat = document.getElementById("dat");             // データ表示用div要素の取得
+            dat.innerHTML = str;                                  // データ文字列の表示
+        }
+    </script>
+</body>
+
+</html>
