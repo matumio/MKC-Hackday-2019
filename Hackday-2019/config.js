@@ -4,6 +4,8 @@ config.host = process.env.HOST || process.env.DB_URI;
 config.authKey = process.env.AUTH_KEY || process.env.DB_PRI_KEY;
 config.databaseId = "ToDoList";
 config.containerId = "Items";
+config.appDabaseId = "Master";
+config.appContainerId = "Items";
 
 if (config.host.includes("https://localhost:")) {
   console.log("Local environment detected");
